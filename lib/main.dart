@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'pages/start.dart';
+import 'pages/editor.dart';
 
 void main()
 {
@@ -16,7 +17,7 @@ class NotDwnApp extends StatelessWidget
     return MaterialApp(
       title: 'NotDwn',
       theme: ThemeData.dark(),
-      home: StartPage(),
+      home: EditorPage(),
 
       debugShowCheckedModeBanner: false,
     );
