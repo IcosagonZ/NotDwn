@@ -27,7 +27,7 @@ void showHelpDialog(BuildContext context){
                 crossAxisAlignment: .start,
                 children: [
                 Center(
-                  child: Text("NotDown", style: style_titlelarge,),
+                  child: Text("NotDwn", style: style_titlelarge,),
                 ),
                 Center(
                   child: Text("A lightweight text editor", style: style_titlesmall),
@@ -48,7 +48,10 @@ void showHelpDialog(BuildContext context){
                 Divider(),
                 Text("Shortcuts", style: style_titlemedium),
                 Divider(),
-                Text("Ctrl + S - save"),
+                Text("Ctrl + N - create new blank file"),
+                Text("Ctrl + O - open a file"),
+                Text("Ctrl + S - save current file"),
+                Text("Ctrl + Q - quit program"),
                 Text("Ctrl + = - increase editor font size"),
                 Text("Ctrl + - - decrease editor font size"),
               ],
