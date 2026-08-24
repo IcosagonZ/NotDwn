@@ -143,4 +143,22 @@ class FileHandler{
       message: "Cancelled"
     );
   }
+
+  // FILE STATISTICS
+  Future<DateTime?> lastModified() async {
+    if(filePath==null){
+      return null;
+    }
+    else{
+      try{
+        final file = File(filePath!);
+        final stat = await file.stat();
+
+        return stat.modified;
+      }
+      catch(e){
+        return null;
+      }
+    }
+  }
 }

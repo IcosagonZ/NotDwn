@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../dialogs/snackbar.dart';
 import '../dialogs/about.dart';
@@ -19,6 +20,7 @@ class _EditorPageState extends State<EditorPage> {
 
   FileHandler fileHandler = FileHandler();
   DialogSnackbar dialogSnackbar = DialogSnackbar();
+  DateTime dateTimeCurrent = DateTime.now();
 
   // Controllers
   MenuController menuController = MenuController();
@@ -36,13 +38,38 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void dispose() {
     editorController.dispose();
+    editorFocusNode.dispose();
     super.dispose();
+  }
+
+  // UI statistics
+  String statFileName = "Nothing opened";
+  String statFilePath = "N/A";
+
+  DateTime? statLastModified;
+  String statLastModifiedText = "Never";
+
+  void uiRefreshStatistics() async{
+
+    dateTimeCurrent = DateTime.now();
+    statLastModified = await fileHandler.lastModified();
+    statLastModifiedText = "Never";
+
+    setState(() {
+      // Basic details
+      statFileName = fileHandler.fileName ?? "Nothing opened";
+      statFilePath =fileHandler.filePath ?? "N/A";
+
+      statLastModifiedText = DateFormat("d/M/yy h:mm a").format(statLastModified!);
+    });
   }
 
   // UI and file handler interactions
   void fileHandlerNew(){
     editorController.text = "";
     fileHandler.newFile();
+
+    uiRefreshStatistics();
   }
   void fileHandlerOpen() async{
     final result = await fileHandler.openFile();
@@ -54,6 +81,8 @@ class _EditorPageState extends State<EditorPage> {
     if(result.status==0){
       editorController.text = result.data!;
     }
+
+    uiRefreshStatistics();
   }
   void fileHandlerSave() async{
     final result = await fileHandler.saveFile(editorController.text);
@@ -61,6 +90,8 @@ class _EditorPageState extends State<EditorPage> {
     if(mounted){
       dialogSnackbar.showSnackBar(context, result.message, result.status);
     }
+
+    uiRefreshStatistics();
   }
   void fileHandlerSaveAs() async{
     final result = await fileHandler.saveFileAs(editorController.text);
@@ -68,6 +99,8 @@ class _EditorPageState extends State<EditorPage> {
     if(mounted){
       dialogSnackbar.showSnackBar(context, result.message, result.status);
     }
+
+    uiRefreshStatistics();
   }
 
   // Misc actions
@@ -280,25 +313,36 @@ class _EditorPageState extends State<EditorPage> {
           Expanded(
             child: Padding(
               padding:EdgeInsetsGeometry.all(16),
-              child: TextField(
-                controller: editorController,
-                focusNode: editorFocusNode,
+              child: CallbackShortcuts(
+                bindings: {
+                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.equal): () => {
+                    fontSizeIncrease()
+                  },
 
-                maxLines: null,
-                enableInteractiveSelection: true,
-                keyboardType: .multiline,
-                autofocus: true,
-                decoration: null,
+                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.minus): () => {
+                    fontSizeDecrease()
+                  }
+                },
+                child: TextField(
+                  controller: editorController,
+                  focusNode: editorFocusNode,
 
-                selectionWidthStyle: .tight,
-                selectionControls: desktopTextSelectionControls,
+                  maxLines: null,
+                  enableInteractiveSelection: true,
+                  keyboardType: .multiline,
+                  autofocus: true,
+                  decoration: null,
 
-                style: TextStyle(
-                  fontSize: viewFontSize,
-                  height: 1.5,
-                  //color: Colors.white
+                  selectionWidthStyle: .tight,
+                  selectionControls: desktopTextSelectionControls,
+
+                  style: TextStyle(
+                    fontSize: viewFontSize,
+                    height: 1.5,
+                    //color: Colors.white
+                  ),
+                  //cursorColor: colorPrimary,
                 ),
-                //cursorColor: colorPrimary,
               )
             )
           ),
@@ -308,10 +352,10 @@ class _EditorPageState extends State<EditorPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text("...")
+                  child: Text(statFileName)
                 ),
                 Divider(),
-                Text("...")
+                Text("Modified: $statLastModifiedText")
               ],
             )
           )
