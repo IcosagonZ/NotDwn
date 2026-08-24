@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../dialogs/snackbar.dart';
+import '../dialogs/about.dart';
+import '../dialogs/help.dart';
+
 import '../handlers/filehandler.dart';
 
 class EditorPage extends StatefulWidget
@@ -230,14 +233,17 @@ class _EditorPageState extends State<EditorPage> {
                               fontSizeDecrease();
                             },
                           ),
+                          /*
                           Divider(),
                           MenuItemButton(
                             leadingIcon: Icon(Icons.fullscreen),
                             child: Text("Fullscreen"),
                             onPressed: (){
                               menuController.close();
+
                             },
                           ),
+                          */
                         ],
                         child: MenuAcceleratorLabel("&View"),
                       ),
@@ -246,9 +252,10 @@ class _EditorPageState extends State<EditorPage> {
                         menuChildren: [
                           MenuItemButton(
                             leadingIcon: Icon(Icons.help),
-                            child: Text("View documentation"),
+                            child: Text("Help"),
                             onPressed: (){
                               menuController.close();
+                              showHelpDialog(context);
                             },
                           ),
                           Divider(),
@@ -257,6 +264,7 @@ class _EditorPageState extends State<EditorPage> {
                             child: Text("About NotDwn"),
                             onPressed: (){
                               menuController.close();
+                              showAbout(context);
                             },
                           ),
                         ],
