@@ -1,5 +1,9 @@
 # NotDwn
 Lightweight Flutter based note taking application with markdown support.
+
+## Screenshot
+<img src="screenshots/screenshot_0.png" alt="Screenshot of editor"/>
+
 ## Planned features
 - [X] Textfile (.txt)
 - [ ] Tables
