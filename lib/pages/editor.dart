@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:split_view/split_view.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 import 'package:window_manager/window_manager.dart';
 
@@ -9,6 +11,8 @@ import '../dialogs/about.dart';
 import '../dialogs/help.dart';
 
 import '../handlers/filehandler.dart';
+
+import '../renderers/markdown.dart';
 
 class EditorPage extends StatefulWidget
 {
@@ -23,6 +27,12 @@ class _EditorPageState extends State<EditorPage> {
   FileHandler fileHandler = FileHandler();
   DialogSnackbar dialogSnackbar = DialogSnackbar();
   DateTime dateTimeCurrent = DateTime.now();
+  SplitViewController splitViewController = SplitViewController(
+    weights: [
+      1.0,
+      0.0
+    ]
+  );
 
   // Window management
   WindowManager windowManager = WindowManager.instance;
@@ -31,19 +41,34 @@ class _EditorPageState extends State<EditorPage> {
   MenuController menuController = MenuController();
   TextEditingController editorController = TextEditingController();
   FocusNode editorFocusNode = FocusNode();
+  Timer? editorTimer;
+
+  // Main variables
+  String displayText = "Nothing opened";
+  bool fileIsMarkdown = false;
 
   // View settings
   double viewFontSize = 16;
   double viewFontStep = 1; // for increment/decrement
 
+  bool viewIsFullscreen = false;
+  bool viewMarkdown = false;
+
   @override initState(){
     super.initState();
+    initWindow();
+  }
+
+  void initWindow() async {
+    viewIsFullscreen = await windowManager.isFullScreen();
   }
 
   @override
   void dispose() {
     editorController.dispose();
     editorFocusNode.dispose();
+    uiUpdateTimerDisable();
+
     super.dispose();
   }
 
@@ -64,9 +89,25 @@ class _EditorPageState extends State<EditorPage> {
       // Basic details
       statFileName = fileHandler.fileName ?? "Nothing opened";
       statFilePath =fileHandler.filePath ?? "N/A";
+      fileIsMarkdown = statFileName.endsWith(".md");
 
       statLastModifiedText = DateFormat("d/M/yy h:mm a").format(statLastModified!);
     });
+  }
+
+  void uiUpdateDisplayText(){
+    setState(() {
+      displayText = editorController.text;
+    });
+  }
+
+  void uiUpdateTimerEnable(){
+    editorTimer = Timer.periodic(Duration(seconds: 2), (_) => uiUpdateDisplayText());
+  }
+
+  void uiUpdateTimerDisable(){
+    editorTimer?.cancel();
+    editorTimer = null;
   }
 
   // UI and file handler interactions
@@ -126,12 +167,84 @@ class _EditorPageState extends State<EditorPage> {
     });
   }
 
+  void viewFullscreenToggle() async{
+    viewIsFullscreen = await windowManager.isFullScreen();
+
+    windowManager.setFullScreen(!viewIsFullscreen);
+    setState(() {
+      viewIsFullscreen = !viewIsFullscreen;
+    });
+  }
+
+  // Widgets
+  Widget editorWidget()
+  {
+    return CallbackShortcuts(
+      bindings: {
+        // New with Ctrl + N
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
+          fileHandlerNew()
+        },
+
+        // New with Ctrl + O
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
+          fileHandlerOpen()
+        },
+
+        // Save with Ctrl + S
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
+          fileHandlerSave()
+        },
+
+        // Quit with Ctrl + Q
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ): () => {
+          quitProgram()
+        },
+
+        // Increase font size with Ctrl + =
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.equal): () => {
+          fontSizeIncrease()
+        },
+
+        // Decrease font size with Ctrl + -
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.minus): () => {
+          fontSizeDecrease()
+        }
+      },
+      child: TextField(
+        controller: editorController,
+        focusNode: editorFocusNode,
+
+        maxLines: null,
+        enableInteractiveSelection: true,
+        keyboardType: .multiline,
+        autofocus: true,
+        decoration: null,
+
+        selectionWidthStyle: .tight,
+        selectionControls: desktopTextSelectionControls,
+
+        style: TextStyle(
+          fontSize: viewFontSize,
+          height: 1.5,
+          //color: Colors.white
+        ),
+        onEditingComplete: (){
+          if(viewMarkdown){
+            uiUpdateDisplayText();
+          }
+        },
+        //cursorColor: colorPrimary,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context)
   {
     // Appearance themes
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    //final textTheme = Theme.of(context).textTheme;
 
     Color colorPrimary = colorScheme.primary;
     //Color colorSecondary = colorScheme.secondary;
@@ -301,8 +414,68 @@ class _EditorPageState extends State<EditorPage> {
                                 fontSizeDecrease();
                               },
                             ),
+                            Divider(),
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.zoom_out),
+                              trailingIcon: AbsorbPointer(
+                                absorbing: true,
+                                child: Checkbox(
+                                  tristate: false,
+                                  value: viewIsFullscreen,
+                                  onChanged: (value){
+                                  },
+                                ),
+                              ),
+                              child: Text("Fullscreen"),
+                              onPressed: (){
+                                viewFullscreenToggle();
+                              },
+                            ),
                           ],
                           child: MenuAcceleratorLabel("&View"),
+                        ),
+                        // Window menu
+                        SubmenuButton(
+                          menuChildren: [
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.help),
+                              trailingIcon: AbsorbPointer(
+                                absorbing: true,
+                                child: Checkbox(
+                                  tristate: false,
+                                  value: viewMarkdown,
+                                  onChanged: (value){
+                                  },
+                                ),
+                              ),
+                              child: Text("Markdown render"),
+                              onPressed: (){
+                                if(fileIsMarkdown){
+                                  if(viewMarkdown)
+                                  {
+                                    uiUpdateTimerDisable();
+                                    splitViewController.weights = [1, 0];
+                                  }
+                                  else{
+                                    uiUpdateDisplayText();
+                                    splitViewController.weights = [0.5, 0.5];
+                                    uiUpdateTimerEnable();
+                                  }
+                                  setState(() {
+                                    viewMarkdown = !viewMarkdown;
+                                  });
+                                }
+                                else{
+                                  dialogSnackbar.showSnackBar(
+                                    context,
+                                    "Current file is not markdown",
+                                    0
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                          child: MenuAcceleratorLabel("&Window"),
                         ),
                         // Help menu
                         SubmenuButton(
@@ -350,59 +523,22 @@ class _EditorPageState extends State<EditorPage> {
           Expanded(
             child: Padding(
               padding:EdgeInsetsGeometry.all(16),
-              child: CallbackShortcuts(
-                bindings: {
-                  // New with Ctrl + N
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
-                    fileHandlerNew()
-                  },
-
-                  // New with Ctrl + O
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
-                    fileHandlerOpen()
-                  },
-
-                  // Save with Ctrl + S
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () => {
-                    fileHandlerSave()
-                  },
-
-                  // Quit with Ctrl + Q
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ): () => {
-                    quitProgram()
-                  },
-
-                  // Increase font size with Ctrl + =
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.equal): () => {
-                    fontSizeIncrease()
-                  },
-
-                  // Decrease font size with Ctrl + -
-                  LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.minus): () => {
-                    fontSizeDecrease()
-                  }
-                },
-                child: TextField(
-                  controller: editorController,
-                  focusNode: editorFocusNode,
-
-                  maxLines: null,
-                  enableInteractiveSelection: true,
-                  keyboardType: .multiline,
-                  autofocus: true,
-                  decoration: null,
-
-                  selectionWidthStyle: .tight,
-                  selectionControls: desktopTextSelectionControls,
-
-                  style: TextStyle(
-                    fontSize: viewFontSize,
-                    height: 1.5,
-                    //color: Colors.white
-                  ),
-                  //cursorColor: colorPrimary,
-                ),
-              )
+              child: viewMarkdown ? SplitView(
+                controller: splitViewController,
+                viewMode: .Horizontal,
+                gripColor: colorSurfaceBright,
+                gripColorActive: colorPrimary,
+                gripSize: 2.0,
+                children: [
+                  editorWidget(),
+                  Padding(
+                    padding: .all(16),
+                    child: ListView(
+                      children: markdownProcess(context, displayText),
+                    ),
+                  )
+                ],
+              ) : editorWidget(),
             )
           ),
           Divider(
