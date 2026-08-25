@@ -414,23 +414,6 @@ class _EditorPageState extends State<EditorPage> {
                                 fontSizeDecrease();
                               },
                             ),
-                            Divider(),
-                            MenuItemButton(
-                              leadingIcon: Icon(Icons.zoom_out),
-                              trailingIcon: AbsorbPointer(
-                                absorbing: true,
-                                child: Checkbox(
-                                  tristate: false,
-                                  value: viewIsFullscreen,
-                                  onChanged: (value){
-                                  },
-                                ),
-                              ),
-                              child: Text("Fullscreen"),
-                              onPressed: (){
-                                viewFullscreenToggle();
-                              },
-                            ),
                           ],
                           child: MenuAcceleratorLabel("&View"),
                         ),
@@ -438,7 +421,6 @@ class _EditorPageState extends State<EditorPage> {
                         SubmenuButton(
                           menuChildren: [
                             MenuItemButton(
-                              leadingIcon: Icon(Icons.help),
                               trailingIcon: AbsorbPointer(
                                 absorbing: true,
                                 child: Checkbox(
@@ -472,6 +454,23 @@ class _EditorPageState extends State<EditorPage> {
                                     0
                                   );
                                 }
+                              },
+                            ),
+                            Divider(),
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.fullscreen),
+                              trailingIcon: AbsorbPointer(
+                                absorbing: true,
+                                child: Checkbox(
+                                  tristate: false,
+                                  value: viewIsFullscreen,
+                                  onChanged: (value){
+                                  },
+                                ),
+                              ),
+                              child: Text("Fullscreen"),
+                              onPressed: (){
+                                viewFullscreenToggle();
                               },
                             ),
                           ],
