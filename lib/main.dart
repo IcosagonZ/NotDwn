@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 
 import 'pages/start.dart';
 import 'pages/editor.dart';
+
+import 'themes/grayscale.dart';
 
 void main()
 {
@@ -34,7 +37,7 @@ class NotDwnApp extends StatelessWidget
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NotDwn',
-      theme: ThemeData.dark(),
+      theme: GrayscaleTheme.dark,
       home: EditorPage(),
 
       debugShowCheckedModeBanner: false,
