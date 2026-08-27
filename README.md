@@ -5,14 +5,14 @@ Lightweight Flutter based text editor with markdown support.
 ![Screenshot 0](screenshots/screenshot_0.png)
 
 ## Planned features
-[x] Textfile (.txt)
-[ ] Tables
-[x] Markdown (.md) using `gpt_markdown` library
-[ ] NotDwn language and support with embedded images
-[ ] Knowledge graph
-[ ] Charts
-[ ] Android editors
-[ ] User themes
+- [x] Textfile (.txt)
+- [ ] Tables
+- [x] Markdown (.md) using `gpt_markdown` library
+- [ ] NotDwn language and support with embedded images
+- [ ] Knowledge graph
+- [ ] Charts
+- [ ] Android editors
+- [ ] User themes
 
 # License
 NotDwn - Lightweight text editor
