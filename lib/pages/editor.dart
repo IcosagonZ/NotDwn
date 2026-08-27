@@ -1,15 +1,17 @@
 // Editor page
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-
-import 'package:provider/provider.dart';
-import 'package:window_manager/window_manager.dart';
-import 'package:split_view/split_view.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/material.dart' as legacy_material;
+import 'package:material_ui/material_ui.dart';
 
 import 'dart:async';
 
+import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:intl/intl.dart';
+
+import 'package:split_view/split_view.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 
 import '../dialogs/snackbar.dart';
 import '../dialogs/about.dart';
@@ -18,7 +20,9 @@ import '../dialogs/help.dart';
 import '../handlers/settings.dart';
 import '../handlers/filehandler.dart';
 
-import '../renderers/markdown.dart';
+import 'dart:io';
+
+//import '../renderers/markdown.dart';
 
 class EditorPage extends StatefulWidget
 {
@@ -86,25 +90,43 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   // UI statistics
-  String statFileName = "Nothing opened";
-  String statFilePath = "N/A";
+  String? uiFileName;
+  String? uiFilePath;
 
-  DateTime? statLastModified;
-  String statLastModifiedText = "Never";
+  DateTime? uiLastModified;
+  String uiLastModifiedText = "Never";
 
-  void uiRefreshStatistics() async{
+  Future<void> uiUpdate() async{
 
     dateTimeCurrent = DateTime.now();
-    statLastModified = await fileHandler.lastModified();
-    statLastModifiedText = "Never";
+    uiLastModified = await fileHandler.lastModified();
 
     setState(() {
       // Basic details
-      statFileName = fileHandler.fileName ?? "Nothing opened";
-      statFilePath =fileHandler.filePath ?? "N/A";
-      fileIsMarkdown = statFileName.endsWith(".md");
+      uiFileName = fileHandler.fileName;
+      uiFilePath =fileHandler.filePath;
 
-      statLastModifiedText = DateFormat("d/M/yy h:mm a").format(statLastModified!);
+      if(uiFileName!=null){
+        fileIsMarkdown = uiFileName!.endsWith(".md");
+      }
+      else{
+        fileIsMarkdown = false;
+      }
+
+      // Hide markdown view if not .md, else show if already showing
+      if(viewMarkdown==true)
+      {
+        if(fileIsMarkdown==false){
+          viewMarkdownDisable();
+        }
+      }
+
+      if(uiLastModified==null){
+        uiLastModifiedText = "Never";
+      }
+      else{
+        uiLastModifiedText = DateFormat("d/M/yy h:mm a").format(uiLastModified!);
+      }
     });
   }
 
@@ -124,11 +146,11 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   // UI and file handler interactions
-  void fileHandlerNew(){
+  void fileHandlerNew() async{
     editorController.text = "";
     fileHandler.newFile();
 
-    uiRefreshStatistics();
+    uiUpdate();
   }
   void fileHandlerOpen() async{
     final result = await fileHandler.openFile();
@@ -141,7 +163,20 @@ class _EditorPageState extends State<EditorPage> {
       editorController.text = result.data!;
     }
 
-    uiRefreshStatistics();
+    uiUpdate();
+  }
+  void fileHandlerReload() async{
+    final result = await fileHandler.reopenFile();
+
+    if(mounted){
+      dialogSnackbar.showSnackBar(context, result.message, result.status);
+    }
+
+    if(result.status==0){
+      editorController.text = result.data!;
+    }
+
+    uiUpdate();
   }
   void fileHandlerSave() async{
     final result = await fileHandler.saveFile(editorController.text);
@@ -150,7 +185,7 @@ class _EditorPageState extends State<EditorPage> {
       dialogSnackbar.showSnackBar(context, result.message, result.status);
     }
 
-    uiRefreshStatistics();
+    uiUpdate();
   }
   void fileHandlerSaveAs() async{
     final result = await fileHandler.saveFileAs(editorController.text);
@@ -159,7 +194,7 @@ class _EditorPageState extends State<EditorPage> {
       dialogSnackbar.showSnackBar(context, result.message, result.status);
     }
 
-    uiRefreshStatistics();
+    uiUpdate();
   }
 
   // Misc actions
@@ -202,6 +237,43 @@ class _EditorPageState extends State<EditorPage> {
     setState(() {
       viewIsDarkMode = settings.settingsIsDarkMode;
     });
+  }
+
+  void viewMarkdownEnable(){
+    uiUpdateDisplayText();
+    splitViewController.weights = [0.5, 0.5];
+    uiUpdateTimerEnable();
+
+    setState(() {
+      viewMarkdown = true;
+    });
+  }
+
+  void viewMarkdownDisable(){
+    uiUpdateTimerDisable();
+    splitViewController.weights = [1, 0];
+
+    setState(() {
+      viewMarkdown = false;
+    });
+  }
+
+  void viewMarkdownToggle() {
+    if(fileIsMarkdown){
+      if(viewMarkdown){
+        viewMarkdownDisable();
+      }
+      else{
+        viewMarkdownEnable();
+      }
+    }
+    else{
+      dialogSnackbar.showSnackBar(
+        context,
+        "Current file is not markdown",
+        0
+      );
+    }
   }
 
   // Widgets
@@ -265,6 +337,40 @@ class _EditorPageState extends State<EditorPage> {
         //cursorColor: colorPrimary,
       ),
     );
+  }
+
+  Widget componentImage(String url, double? width, double? height){
+
+    if(url.startsWith("http://") || url.startsWith("https://")){
+      return Image.network(
+        url,
+        width: width,
+        height: height,
+      );
+    }
+    else if(url.startsWith("assets/")){
+      return Image.asset(
+        url,
+        width: width,
+        height: height,
+      );
+    }
+    else{
+      if(uiFilePath!=null){
+        final imagePath = uiFilePath!.replaceAll("$uiFileName", url);
+
+        return Image.file(
+          File(imagePath),
+          width: width,
+          height: height,
+        );
+      }
+      else{
+        return Icon(
+          Icons.error
+        );
+      }
+    }
   }
 
   @override
@@ -342,6 +448,17 @@ class _EditorPageState extends State<EditorPage> {
                                 menuController.close();
                                 fileHandlerOpen();
                               },
+                            ),
+                            Visibility(
+                              visible: uiFileName!=null,
+                              child: MenuItemButton(
+                                leadingIcon: Icon(Icons.refresh),
+                                child: Text("Reload"),
+                                onPressed: (){
+                                  menuController.close();
+                                  fileHandlerReload();
+                                },
+                              ),
                             ),
                             Divider(),
                             MenuItemButton(
@@ -460,28 +577,7 @@ class _EditorPageState extends State<EditorPage> {
                               ),
                               child: Text("Markdown render"),
                               onPressed: (){
-                                if(fileIsMarkdown){
-                                  if(viewMarkdown)
-                                  {
-                                    uiUpdateTimerDisable();
-                                    splitViewController.weights = [1, 0];
-                                  }
-                                  else{
-                                    uiUpdateDisplayText();
-                                    splitViewController.weights = [0.5, 0.5];
-                                    uiUpdateTimerEnable();
-                                  }
-                                  setState(() {
-                                    viewMarkdown = !viewMarkdown;
-                                  });
-                                }
-                                else{
-                                  dialogSnackbar.showSnackBar(
-                                    context,
-                                    "Current file is not markdown",
-                                    0
-                                  );
-                                }
+                                viewMarkdownToggle();
                               },
                             ),
                             Divider(),
@@ -576,10 +672,29 @@ class _EditorPageState extends State<EditorPage> {
                   editorWidget(),
                   Padding(
                     padding: .all(16),
+                    child: SingleChildScrollView(
+                      child: MaterialUiCompatibilityBridge(
+                        child: legacy_material.Material(
+                          child: GptMarkdown(
+                            displayText,
+                            isStreaming: true,
+                            charactersPerSecond: 100,
+
+                            imageBuilder:(context, url, width, height) {
+                              return componentImage(url, width, height);
+                            },
+                          ),
+                        ),
+                      )
+                    )
+                  )
+                  /*
+                  Padding(
+                    padding: .all(16),
                     child: ListView(
                       children: markdownProcess(context, displayText),
                     ),
-                  )
+                  )*/
                 ],
               ) : editorWidget(),
             )
@@ -594,10 +709,10 @@ class _EditorPageState extends State<EditorPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(statFileName)
+                  child: Text(uiFileName ?? "Nothing opened")
                 ),
                 Divider(),
-                Text("Modified: $statLastModifiedText")
+                Text("Modified: $uiLastModifiedText")
               ],
             )
           )

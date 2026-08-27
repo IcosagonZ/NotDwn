@@ -1,18 +1,18 @@
 # NotDwn
-Lightweight Flutter based note taking application with markdown support.
+Lightweight Flutter based text editor with markdown support.
 
 ## Screenshot
-<img src="screenshots/screenshot_0.png" alt="Screenshot of editor"/>
+![Screenshot 0](screenshots/screenshot_0.png)
 
 ## Planned features
-- [X] Textfile (.txt)
-- [ ] Tables
-- [X] Markdown (.md)
-- [ ] NotDwn language and support with embedded images
-- [ ] Knowledge graph
-- [ ] Charts
-- [ ] Android editors
-- [ ] User themes
+[x] Textfile (.txt)
+[ ] Tables
+[x] Markdown (.md) using `gpt_markdown` library
+[ ] NotDwn language and support with embedded images
+[ ] Knowledge graph
+[ ] Charts
+[ ] Android editors
+[ ] User themes
 
 # License
 NotDwn - Lightweight text editor

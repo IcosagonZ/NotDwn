@@ -71,6 +71,24 @@ class FileHandler{
     );
   }
 
+  Future<FileHandlerReturn> reopenFile() async{
+    if(filePath==null){
+      return FileHandlerReturn(
+        status: 1,
+        message: "File path null"
+      );
+    }
+
+    File file = File(filePath!);
+    String fileContent = await file.readAsString();
+
+    return FileHandlerReturn(
+      status: 0,
+      message: "File reopened",
+      data: fileContent
+    );
+  }
+
   Future<FileHandlerReturn> saveFile(String data) async{
     if(data.isEmpty){
       return FileHandlerReturn(
