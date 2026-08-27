@@ -1,10 +1,13 @@
+// Main start point
+
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:provider/provider.dart';
 
 import 'pages/start.dart';
 import 'pages/editor.dart';
 
+import 'handlers/settings.dart';
 import 'themes/grayscale.dart';
 
 void main()
@@ -26,7 +29,10 @@ void main()
     }
   );
 
-  runApp(const NotDwnApp());
+  runApp(ChangeNotifierProvider(
+    create: (_) => Settings(),
+    child: const NotDwnApp(),
+  ));
 }
 
 class NotDwnApp extends StatelessWidget
@@ -35,9 +41,13 @@ class NotDwnApp extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<Settings>(context);
+
     return MaterialApp(
       title: 'NotDwn',
-      theme: GrayscaleTheme.dark,
+      theme: GrayscaleTheme.light,
+      darkTheme: GrayscaleTheme.dark,
+      themeMode: settings.themeMode,
       home: EditorPage(),
 
       debugShowCheckedModeBanner: false,

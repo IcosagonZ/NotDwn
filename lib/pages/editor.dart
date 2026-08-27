@@ -1,15 +1,21 @@
+// Editor page
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:split_view/split_view.dart';
 import 'package:intl/intl.dart';
+
 import 'dart:async';
 
-import 'package:window_manager/window_manager.dart';
 
 import '../dialogs/snackbar.dart';
 import '../dialogs/about.dart';
 import '../dialogs/help.dart';
 
+import '../handlers/settings.dart';
 import '../handlers/filehandler.dart';
 
 import '../renderers/markdown.dart';
@@ -48,10 +54,10 @@ class _EditorPageState extends State<EditorPage> {
   bool fileIsMarkdown = false;
 
   // View settings
-  double viewFontSize = 16;
-  double viewFontStep = 1; // for increment/decrement
+  double viewFontSize = settingsDefaultFontSize;
 
   bool viewIsFullscreen = false;
+  bool viewIsDarkMode = settingsDefaultIsDarkMode;
   bool viewMarkdown = false;
 
   @override initState(){
@@ -61,6 +67,13 @@ class _EditorPageState extends State<EditorPage> {
 
   void initWindow() async {
     viewIsFullscreen = await windowManager.isFullScreen();
+
+    // Read settings
+    final settings = context.read<Settings>();
+    if(mounted){
+      viewIsDarkMode = settings.settingsIsDarkMode;
+      viewFontSize = settings.settingsFontSize;
+    }
   }
 
   @override
@@ -155,15 +168,21 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   // View actions
-  void fontSizeIncrease(){
+  void fontSizeIncrease() async{
+    final settings = context.read<Settings>();
+    await settings.incrementFontSize();
+
     setState(() {
-      viewFontSize += viewFontStep;
+      viewFontSize = settings.settingsFontSize;
     });
   }
 
-  void fontSizeDecrease(){
+  void fontSizeDecrease() async{
+    final settings = context.read<Settings>();
+    await settings.decrementFontSize();
+
     setState(() {
-      viewFontSize -= viewFontStep;
+      viewFontSize = settings.settingsFontSize;
     });
   }
 
@@ -173,6 +192,15 @@ class _EditorPageState extends State<EditorPage> {
     windowManager.setFullScreen(!viewIsFullscreen);
     setState(() {
       viewIsFullscreen = !viewIsFullscreen;
+    });
+  }
+
+  void viewDarkModeToggle() async{
+    final settings = context.read<Settings>();
+    await settings.toggleDarkMode();
+
+    setState(() {
+      viewIsDarkMode = settings.settingsIsDarkMode;
     });
   }
 
@@ -471,6 +499,22 @@ class _EditorPageState extends State<EditorPage> {
                               child: Text("Fullscreen"),
                               onPressed: (){
                                 viewFullscreenToggle();
+                              },
+                            ),
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.colorize),
+                              trailingIcon: AbsorbPointer(
+                                absorbing: true,
+                                child: Checkbox(
+                                  tristate: false,
+                                  value: viewIsDarkMode,
+                                  onChanged: (value){
+                                  },
+                                ),
+                              ),
+                              child: Text("Dark mode"),
+                              onPressed: (){
+                                viewDarkModeToggle();
                               },
                             ),
                           ],

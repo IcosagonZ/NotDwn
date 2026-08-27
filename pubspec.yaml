@@ -39,10 +39,15 @@ dependencies:
   window_manager: ^0.5.2
   split_view: ^3.2.2
   flex_color_scheme: ^8.4.0
+  json_annotation: ^4.12.0
+  path_provider: ^2.1.6
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  json_serializable: ^6.14.1
+  build_runner: ^2.16.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
