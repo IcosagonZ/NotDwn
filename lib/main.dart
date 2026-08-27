@@ -1,6 +1,6 @@
 // Main start point
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
 
@@ -44,6 +44,7 @@ class NotDwnApp extends StatelessWidget
     final settings = Provider.of<Settings>(context);
 
     return MaterialApp(
+
       title: 'NotDwn',
       theme: GrayscaleTheme.light,
       darkTheme: GrayscaleTheme.dark,
