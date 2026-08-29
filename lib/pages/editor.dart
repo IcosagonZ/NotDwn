@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' as legacy_material;
 import 'package:material_ui/material_ui.dart';
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -20,7 +21,7 @@ import '../dialogs/help.dart';
 import '../handlers/settings.dart';
 import '../handlers/filehandler.dart';
 
-import 'dart:io';
+import '../dialogs/insert/table.dart';
 
 //import '../renderers/markdown.dart';
 
@@ -273,6 +274,21 @@ class _EditorPageState extends State<EditorPage> {
         "Current file is not markdown",
         0
       );
+    }
+  }
+
+  Future<void> insertTable() async{
+    final result = await InsertTableDialog.show(context);
+    if(result!=null){
+      final editorValue = editorController.value;
+      final cursorPosition = editorValue.selection.baseOffset;
+      final editorCurrentText = editorValue.text;
+
+      final editorNewValue = TextEditingValue(
+        text: editorCurrentText + "\n" + result,
+      );
+
+      editorController.value = editorNewValue;
     }
   }
 
@@ -539,6 +555,20 @@ class _EditorPageState extends State<EditorPage> {
                             ),
                           ],
                           child: MenuAcceleratorLabel("&Edit"),
+                        ),
+                        // Insert menu
+                        SubmenuButton(
+                          menuChildren: [
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.help),
+                              child: Text("Table"),
+                              onPressed: (){
+                                insertTable();
+                                menuController.close();
+                              },
+                            ),
+                          ],
+                          child: MenuAcceleratorLabel("&Insert"),
                         ),
                         // View menu
                         SubmenuButton(
