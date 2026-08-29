@@ -6,7 +6,7 @@ Lightweight Flutter based text editor with markdown support.
 
 ## Planned features
 - [x] Textfile (.txt)
-- [ ] Tables
+- [ ] Tables using `pluto_grid` library
 - [x] Markdown (.md) using `gpt_markdown` library
 - [ ] NotDwn language and support with embedded images
 - [ ] Knowledge graph

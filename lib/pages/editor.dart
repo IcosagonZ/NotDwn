@@ -560,7 +560,7 @@ class _EditorPageState extends State<EditorPage> {
                         SubmenuButton(
                           menuChildren: [
                             MenuItemButton(
-                              leadingIcon: Icon(Icons.help),
+                              leadingIcon: Icon(Icons.table_chart),
                               child: Text("Table"),
                               onPressed: (){
                                 insertTable();
