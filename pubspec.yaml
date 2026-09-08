@@ -47,6 +47,8 @@ dependencies:
   flex_seed_scheme: ^5.0.0
   gpt_markdown: ^1.2.1
   pluto_grid: ^8.1.0
+  flutter_lucide: ^1.37.0
+  flex_color_picker: ^4.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

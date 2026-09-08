@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'pages/start.dart';
 import 'pages/editor.dart';
+import 'pages/draw.dart';
 
 import 'handlers/settings.dart';
 import 'themes/grayscale.dart';
@@ -49,7 +50,7 @@ class NotDwnApp extends StatelessWidget
       theme: GrayscaleTheme.light,
       darkTheme: GrayscaleTheme.dark,
       themeMode: settings.themeMode,
-      home: EditorPage(),
+      home: StartPage(),
 
       debugShowCheckedModeBanner: false,
     );

@@ -273,6 +273,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  flex_color_picker:
+    dependency: "direct main"
+    description:
+      name: flex_color_picker
+      sha256: f3cac22c1d5af8b355faa9a8146ae81b441664d499475c7a2690c933cf1c673e
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
   flex_seed_scheme:
     dependency: "direct main"
     description:
@@ -299,6 +307,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_lucide:
+    dependency: "direct main"
+    description:
+      name: flutter_lucide
+      sha256: "96175526b32bcf3567cfe9d255be93f48f6d9f25e6f6ab90736c85a88afe000f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.37.0"
   flutter_math_fork:
     dependency: transitive
     description:

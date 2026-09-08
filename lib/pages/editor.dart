@@ -14,6 +14,8 @@ import 'package:intl/intl.dart';
 import 'package:split_view/split_view.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 
+import 'start.dart';
+
 import '../dialogs/snackbar.dart';
 import '../dialogs/about.dart';
 import '../dialogs/help.dart';
@@ -35,6 +37,7 @@ class EditorPage extends StatefulWidget
 
 class _EditorPageState extends State<EditorPage> {
   // Main handlers
+  WindowManager windowManager = WindowManager.instance;
   FileHandler fileHandler = FileHandler();
   DialogSnackbar dialogSnackbar = DialogSnackbar();
   DateTime dateTimeCurrent = DateTime.now();
@@ -45,8 +48,6 @@ class _EditorPageState extends State<EditorPage> {
     ]
   );
 
-  // Window management
-  WindowManager windowManager = WindowManager.instance;
 
   // Controllers
   MenuController menuController = MenuController();
@@ -496,7 +497,19 @@ class _EditorPageState extends State<EditorPage> {
                             Divider(),
                             MenuItemButton(
                               leadingIcon: Icon(Icons.exit_to_app),
-                              child: Text("Quit"),
+                              child: Text("Quit to Menu"),
+                              onPressed: (){
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (BuildContext context) => StartPage()
+                                  )
+                                );
+                              },
+                            ),
+                            MenuItemButton(
+                              leadingIcon: Icon(Icons.exit_to_app),
+                              child: Text("Quit Program"),
                               onPressed: (){
                                 menuController.close();
                                 quitProgram();
