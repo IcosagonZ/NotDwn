@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
+import 'recents.dart';
+
 class FileHandlerReturn{
   int status;
   String message;
@@ -15,6 +17,9 @@ class FileHandlerReturn{
 }
 
 class FileHandler{
+  // Handlers
+  Recents recentsHandler = Recents();
+
   // File details
   String? fileName;
   String? filePath;
@@ -26,34 +31,56 @@ class FileHandler{
     filePath = null;
   }
 
-  Future<FileHandlerReturn> openFile() async{
+  Future<FileHandlerReturn> openFile({String? path}) async{
     try{
-      final result = await FilePicker.pickFile(
-        type: .any,
-      );
+      File? filePicked;
 
-      if(result!=null){
-        PlatformFile file = result;
+      // No parameters passed, show file picker
+      if(path==null){
+        final result = await FilePicker.pickFile(
+          type: .any,
+        );
 
-        if(file.path!=null){
-          filePath = file.path;
-          fileName = file.name;
+        if(result!=null){
+          filePath = result.path;
+          fileName = result.name;
 
-          File filePicked = File(file.path!);
-          String fileContent = await filePicked.readAsString();
-
-          return FileHandlerReturn(
-            status: 0,
-            message: "File opened",
-            data: fileContent
-          );
+          filePicked = File(filePath!);
         }
-        else{
-          return FileHandlerReturn(
-            status: 1,
-            message: "Invalid file"
-          );
-        }
+      }
+      // Parameters passed
+      else{
+        filePicked = File(path);
+        filePath = path;
+        fileName = path.split("/").last;
+      }
+
+      if(filePicked!=null){
+        String fileContent = await filePicked.readAsString();
+
+        recentsHandler.add(
+          RecentsData(
+            fileName: fileName!,
+            fileType: fileName!.split(".").last,
+            fileSize: await filePicked.length(),
+            filePath: filePath!,
+            fileModified: await filePicked.lastModified(),
+            fileAccessed: await filePicked.lastAccessed(),
+          )
+        );
+
+        return FileHandlerReturn(
+          status: 0,
+          message: "File opened",
+          data: fileContent
+        );
+      }
+      else{
+        // Action cancelled
+        return FileHandlerReturn(
+          status: -1,
+          message: "Cancelled"
+        );
       }
     }
     catch(e)
@@ -63,12 +90,6 @@ class FileHandler{
         message: "$e"
       );
     }
-
-    // Action cancelled in file handler
-    return FileHandlerReturn(
-      status: -1,
-      message: "Cancelled"
-    );
   }
 
   Future<FileHandlerReturn> reopenFile() async{
@@ -107,6 +128,19 @@ class FileHandler{
 
       await file.writeAsString(data);
 
+      final dateTimeNow = DateTime.now();
+
+      recentsHandler.add(
+        RecentsData(
+          fileName: fileName!,
+          fileType: fileName!.split(".").last,
+          fileSize: await file.length(),
+          filePath: filePath!,
+          fileModified: dateTimeNow,
+          fileAccessed: dateTimeNow,
+        )
+      );
+
       return FileHandlerReturn(
         status: 0,
         message: "Saved file"
@@ -140,6 +174,19 @@ class FileHandler{
       if(result!=null){
         filePath = result.path;
         fileName = result.path.split("/").last;
+
+        final dateTimeNow = DateTime.now();
+
+        recentsHandler.add(
+          RecentsData(
+            fileName: fileName!,
+            fileType: fileName!.split(".").last,
+            fileSize: data.length,
+            filePath: filePath!,
+            fileModified: dateTimeNow,
+            fileAccessed: dateTimeNow,
+          )
+        );
 
         return FileHandlerReturn(
           status: 0,

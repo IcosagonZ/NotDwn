@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
+
+import 'recents.dart';
 
 class ImageHandlerReturn{
   int status;
@@ -16,6 +19,9 @@ class ImageHandlerReturn{
 }
 
 class ImageHandler{
+  // Handlers
+  Recents recentsHandler = Recents();
+
   // File details
   String? fileName;
   String? filePath;
@@ -26,37 +32,59 @@ class ImageHandler{
     filePath = null;
   }
 
-  Future<ImageHandlerReturn> openFile() async{
+  Future<ImageHandlerReturn> openFile({String? path}) async{
     try{
-      final result = await FilePicker.pickFile(
-        type: .image,
-      );
+      File? filePicked;
 
-      if(result!=null){
-        PlatformFile file = result;
+      // No parameters passed, show file picker
+      if(path==null){
+        final result = await FilePicker.pickFile(
+          type: .image,
+        );
 
-        if(file.path!=null){
-          filePath = file.path;
-          fileName = file.name;
+        if(result!=null){
+          filePath = result.path;
+          fileName = result.name;
 
-          File filePicked = File(file.path!);
-
-          final bytes = await filePicked.readAsBytes();
-          final codec = await ui.instantiateImageCodec(bytes);
-          final frame = await codec.getNextFrame();
-
-          return ImageHandlerReturn(
-            status: 0,
-            message: "File opened",
-            image: frame.image
-          );
+          filePicked = File(filePath!);
         }
-        else{
-          return ImageHandlerReturn(
-            status: 1,
-            message: "Invalid file"
-          );
-        }
+      }
+      // Parameters passed
+      else{
+        filePicked = File(path);
+        filePath = path;
+        fileName = path.split("/").last;
+      }
+
+
+      if(filePicked!=null){
+        final bytes = await filePicked.readAsBytes();
+        final codec = await ui.instantiateImageCodec(bytes);
+        final frame = await codec.getNextFrame();
+
+        recentsHandler.add(
+          RecentsData(
+            fileName: fileName!,
+            fileType: fileName!.split(".").last,
+            fileSize: await filePicked.length(),
+            filePath: filePath!,
+            fileModified: await filePicked.lastModified(),
+            fileAccessed: await filePicked.lastAccessed(),
+          )
+        );
+
+        return ImageHandlerReturn(
+          status: 0,
+          message: "File opened",
+          image: frame.image
+        );
+      }
+      // Action cancelled in file handler
+      else{
+        return ImageHandlerReturn(
+          status: -1,
+          message: "Cancelled"
+        );
       }
     }
     catch(e)
@@ -66,12 +94,6 @@ class ImageHandler{
         message: "$e"
       );
     }
-
-    // Action cancelled in file handler
-    return ImageHandlerReturn(
-      status: -1,
-      message: "Cancelled"
-    );
   }
 
   Future<ImageHandlerReturn> reopenFile() async{
@@ -113,6 +135,19 @@ class ImageHandler{
       final file = File(filePath!);
       await file.writeAsBytes(uint8List);
 
+      DateTime dateTimeNow = DateTime.now();
+
+      recentsHandler.add(
+        RecentsData(
+          fileName: fileName!,
+          fileType: fileName!.split(".").last,
+          fileSize: await file.length(),
+          filePath: filePath!,
+          fileModified: dateTimeNow,
+          fileAccessed: dateTimeNow,
+        )
+      );
+
       return ImageHandlerReturn(
         status: 0,
         message: "Saved file"
@@ -148,6 +183,19 @@ class ImageHandler{
       if(result!=null){
         filePath = result.path;
         fileName = result.path.split("/").last;
+
+        DateTime dateTimeNow = DateTime.now();
+
+        recentsHandler.add(
+          RecentsData(
+            fileName: fileName!,
+            fileType: fileName!.split(".").last,
+            fileSize: uint8List.lengthInBytes,
+            filePath: filePath!,
+            fileModified: dateTimeNow,
+            fileAccessed: dateTimeNow,
+          )
+        );
 
         return ImageHandlerReturn(
           status: 0,

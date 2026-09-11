@@ -69,6 +69,17 @@ class _EditorPageState extends State<EditorPage> {
   @override initState(){
     super.initState();
     initWindow();
+
+    // Passed path handling
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      final args = ModalRoute.of(context)!.settings.arguments;
+
+      if(args!=null && args is Map){
+        if(args.containsKey("path")){
+          fileHandlerOpen(path: args["path"]);
+        }
+      }
+    });
   }
 
   void initWindow() async {
@@ -154,8 +165,8 @@ class _EditorPageState extends State<EditorPage> {
 
     uiUpdate();
   }
-  void fileHandlerOpen() async{
-    final result = await fileHandler.openFile();
+  void fileHandlerOpen({String? path}) async{
+    final result = await fileHandler.openFile(path: path);
 
     if(mounted){
       dialogSnackbar.showSnackBar(context, result.message, result.status);

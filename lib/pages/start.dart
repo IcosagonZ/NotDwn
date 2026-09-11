@@ -1,10 +1,16 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:file_picker/file_picker.dart';
 
 // Pages
 import 'editor.dart';
 import 'draw.dart';
+
+import '../handlers/recents.dart';
+import '../dialogs/snackbar.dart';
 
 class StartPage extends StatefulWidget
 {
@@ -15,10 +21,13 @@ class StartPage extends StatefulWidget
 }
 
 class _StartPageState extends State<StartPage> {
+  // Handlers
+  WindowManager windowManager = WindowManager.instance;
+  DialogSnackbar dialogSnackbar = DialogSnackbar();
+  Recents recentsHandler = Recents();
 
   String selectedFileType = "All"; // All, Text, Drawing
-
-  WindowManager windowManager = WindowManager.instance;
+  List<RecentsData> recentsListVisible = [];
 
   Future<String?> dialogFileType(BuildContext context, String title) async{
     String? fileType;
@@ -91,6 +100,37 @@ class _StartPageState extends State<StartPage> {
     return fileType;
   }
 
+  void quitProgram(){
+    SystemNavigator.pop();
+  }
+
+  void loadRecents() async{
+    final result = await recentsHandler.load();
+    final recentsList =result;
+
+    recentsListVisible.clear();
+
+    if(selectedFileType!="All"){
+      for(var file in recentsList){
+        if(file.fileType==selectedFileType){
+          recentsListVisible.add(file);
+        }
+      }
+    }
+    else{
+      recentsListVisible = recentsList;
+    }
+
+    setState(() {
+      recentsListVisible = recentsListVisible;
+    });
+  }
+
+  @override initState(){
+    super.initState();
+    loadRecents();
+  }
+
   @override
   Widget build(BuildContext context)
   {
@@ -123,6 +163,7 @@ class _StartPageState extends State<StartPage> {
                       tooltip: "All files",
                       isSelected: selectedFileType=="All",
                       onPressed: (){
+                        loadRecents();
                         setState(() {
                           selectedFileType = "All";
                         });
@@ -131,20 +172,22 @@ class _StartPageState extends State<StartPage> {
                     IconButton(
                       icon: Icon(LucideIcons.file_text),
                       tooltip: "Text",
-                      isSelected: selectedFileType=="Text",
+                      isSelected: selectedFileType=="txt",
                       onPressed: (){
+                        loadRecents();
                         setState(() {
-                          selectedFileType = "Text";
+                          selectedFileType = "txt";
                         });
                       },
                     ),
                     IconButton(
                       icon: Icon(LucideIcons.file_image),
                       tooltip: "Drawing",
-                      isSelected: selectedFileType=="Drawing",
+                      isSelected: selectedFileType=="png",
                       onPressed: (){
+                        loadRecents();
                         setState(() {
-                          selectedFileType = "Drawing";
+                          selectedFileType = "png";
                         });
                       },
                     ),
@@ -153,7 +196,6 @@ class _StartPageState extends State<StartPage> {
                       icon: Icon(LucideIcons.settings),
                       tooltip: "Settings",
                       onPressed: (){
-
                       },
                     ),
                     Expanded(
@@ -184,14 +226,16 @@ class _StartPageState extends State<StartPage> {
                         children: [
                           IconButton(
                             icon: Icon(Icons.close),
+                            tooltip: "Quit program",
                             onPressed: (){
-
+                              quitProgram();
                             },
                           )
                         ],
                       )
                     ),
-                    Expanded(
+                    SizedBox(
+                      height: 200,
                       child: Padding(
                         padding:EdgeInsetsGeometry.all(16),
                         child: GridView(
@@ -209,6 +253,96 @@ class _StartPageState extends State<StartPage> {
                                   child: Column(
                                     mainAxisSize: .min,
                                     children: [
+                                      Icon(LucideIcons.file_input, size: 50),
+                                      SizedBox(height: 16),
+                                      Text("Open")
+                                    ],
+                                  ),
+                                ),
+                                onTap: () async{
+                                  if(selectedFileType=="Text"){
+                                    final filePicked = await FilePicker.pickFile(
+                                      type: .any,
+                                    );
+
+                                    if(filePicked!=null){
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (BuildContext context) => EditorPage(),
+                                          settings: RouteSettings(
+                                            arguments: {"path": filePicked.path}
+                                          ),
+                                        )
+                                      );
+                                    }
+                                  }
+                                  else if(selectedFileType=="Drawing"){
+                                    final filePicked = await FilePicker.pickFile(
+                                      type: .image,
+                                    );
+
+                                    if(filePicked!=null){
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (BuildContext context) => DrawPage(),
+                                          settings: RouteSettings(
+                                            arguments: {"path": filePicked.path}
+                                          ),
+                                        )
+                                      );
+                                    }
+                                  }
+                                  else{
+                                    final filePicked = await FilePicker.pickFile(
+                                      type: .any,
+                                    );
+
+                                    if(filePicked!=null){
+                                      final fileType = filePicked.path!.split(".").last;
+
+                                      if(fileType=="txt"){
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (BuildContext context) => EditorPage(),
+                                            settings: RouteSettings(
+                                              arguments: {"path": filePicked.path}
+                                            ),
+                                          )
+                                        );
+                                      }
+                                      else if (fileType=="png"){
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (BuildContext context) => EditorPage(),
+                                            settings: RouteSettings(
+                                              arguments: {"path": filePicked.path}
+                                            ),
+                                          )
+                                        );
+                                      }
+                                      else{
+                                        dialogSnackbar.showSnackBar(
+                                          context,
+                                          "Invalid file type",
+                                          1
+                                        );
+                                      }
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            Card.filled(
+                              clipBehavior: .hardEdge,
+                              child: InkWell(
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    children: [
                                       Icon(LucideIcons.file_plus_corner, size: 50),
                                       SizedBox(height: 16),
                                       Text("New")
@@ -216,7 +350,7 @@ class _StartPageState extends State<StartPage> {
                                   ),
                                 ),
                                 onTap: () async{
-                                  if(selectedFileType=="Text"){
+                                  if(selectedFileType=="txt"){
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -224,7 +358,7 @@ class _StartPageState extends State<StartPage> {
                                       )
                                     );
                                   }
-                                  else if(selectedFileType=="Drawing"){
+                                  else if(selectedFileType=="png"){
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -244,38 +378,88 @@ class _StartPageState extends State<StartPage> {
                                     }
                                     else if(result=="Text"){
                                       Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (BuildContext context) => EditorPage()
-                                      )
-                                    );
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (BuildContext context) => EditorPage()
+                                        )
+                                      );
                                     }
                                   }
                                 },
                               ),
                             ),
-                            /*
-                            Card.filled(
-                              clipBehavior: .hardEdge,
-                              child: InkWell(
-                                child: Center(
-                                  child: Column(
-                                    mainAxisSize: .min,
-                                    children: [
-                                      Icon(LucideIcons.file_input, size: 50),
-                                      SizedBox(height: 16),
-                                      Text("Open")
-                                    ],
-                                  ),
-                                ),
-                                onTap: () async{
-                                },
-                              ),
-                            ),
-                            */
                           ],
                         )
                       ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: .all(16),
+                        child: ListView.builder(
+                          itemCount: recentsListVisible.length,
+                          itemBuilder: (BuildContext context, int index){
+                            final fileData = recentsListVisible[index];
+                            final fileType = fileData.fileType;
+
+                            IconData fileIcon = LucideIcons.file_question_mark;
+
+                            if(fileType == "txt"){
+                              fileIcon = LucideIcons.file_text;
+                            }
+                            else if(fileType == "md"){
+                              fileIcon = LucideIcons.file_code;
+                            }
+                            else if(fileType == "png"){
+                              fileIcon = LucideIcons.file_image;
+                            }
+                            else if(fileType == "csv"){
+                              fileIcon = LucideIcons.file_spreadsheet;
+                            }
+
+                            return Card(
+                              clipBehavior: .hardEdge,
+                              child: InkWell(
+                                child: ListTile(
+                                  leading: Icon(fileIcon),
+                                  title: Text(fileData.fileName, overflow: .ellipsis,),
+                                  subtitle: Text(fileData.filePath, overflow: .ellipsis,),
+                                ),
+                                onTap: () async{
+                                  if(fileType=="txt"){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => EditorPage(),
+                                        settings: RouteSettings(
+                                          arguments: {"path": fileData.filePath}
+                                        ),
+                                      )
+                                    );
+                                  }
+                                  else if(fileType=="png"){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => DrawPage(),
+                                        settings: RouteSettings(
+                                          arguments: {"path": fileData.filePath}
+                                        ),
+                                      )
+                                    );
+                                  }
+                                  else{
+                                    dialogSnackbar.showSnackBar(
+                                      context,
+                                      "Invalid file type",
+                                      1
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      )
                     )
                   ],
                 )

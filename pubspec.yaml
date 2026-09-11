@@ -49,6 +49,8 @@ dependencies:
   pluto_grid: ^8.1.0
   flutter_lucide: ^1.37.0
   flex_color_picker: ^4.0.0
+  sqflite: ^2.4.4
+  sqflite_common_ffi: ^2.4.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

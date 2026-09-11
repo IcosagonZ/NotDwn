@@ -1,6 +1,6 @@
 bool loggerEnabled = true;
 
-List<String> loggerIgnore = ["Settings"];
+List<String> loggerIgnore = ["Settings", "Recents"];
 
 void log(String caller, String message){
   if(loggerEnabled){

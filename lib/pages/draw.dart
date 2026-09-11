@@ -210,8 +210,8 @@ class _DrawPageState extends State<DrawPage> {
     imageHandler.newFile();
   }
 
-  void fileOpen() async{
-    final result = await imageHandler.openFile();
+  void fileOpen({String? path}) async{
+    final result = await imageHandler.openFile(path: path);
     if(mounted){
       dialogSnackbar.showSnackBar(context, result.message, result.status);
     }
@@ -256,6 +256,19 @@ class _DrawPageState extends State<DrawPage> {
     canvasImage = null;
     setState(() {
       canvasPoints = [];
+    });
+  }
+
+  @override initState(){
+    super.initState();
+    // Passed path handling
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if(args!=null && args is Map){
+        if(args.containsKey("path")){
+          fileOpen(path: args["path"]);
+        }
+      }
     });
   }
 

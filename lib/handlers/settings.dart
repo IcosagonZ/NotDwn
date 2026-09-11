@@ -72,7 +72,7 @@ class Settings extends ChangeNotifier{
   }
 
   Future<String> getPath() async{
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationSupportDirectory();
     return "${directory.path}/$settingsFileName";
   }
 

@@ -3,6 +3,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'pages/start.dart';
 import 'pages/editor.dart';
@@ -31,6 +34,12 @@ void main()
       await windowManager.focus();
     }
   );
+
+  if(Platform.isLinux || Platform.isWindows)
+  {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   runApp(ChangeNotifierProvider(
     create: (_) => Settings(),

@@ -1,7 +1,5 @@
 // Settings Handler
-
-import 'package:material_ui/material_ui.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'dart:io';
@@ -9,193 +7,171 @@ import 'dart:convert';
 
 import '../handlers/logger.dart';
 
-part 'recents.g.dart';
-// Generate using dart run build_runner build --delete-conflicting-outputs
+List<String> sqlCommands = [
+  "create table if not exists recents(name text, type text, size integer, path text primary key, modified text, accessed text);"
+];
 
 // Settings file name
-const String recentsFileName = "recents.json";
+const String recentsDatabaseName = "recents.db";
 
 // Default values
 const int recentsDefaultVersion = 1;
 
-@JsonSerializable()
-class SettingsData{
-  SettingsData({
-    required this.version,
-    required this.fontSize,
-    required this.isDarkMode
+class RecentsData{
+  String fileName;
+  String fileType;
+  int fileSize;
+
+  String filePath;
+
+  DateTime fileModified;
+  DateTime fileAccessed;
+
+  RecentsData({
+    required this.fileName,
+    required this.fileType,
+    required this.fileSize,
+    required this.filePath,
+    required this.fileModified,
+    required this.fileAccessed,
   });
-
-  @JsonKey(defaultValue: recentsDefaultVersion)
-  int version;
-
-  // View properties
-  @JsonKey(defaultValue: recentsDefaultFontSize)
-  double fontSize;
-
-  // Window properties
-  @JsonKey(defaultValue: recentsDefaultIsDarkMode)
-  bool isDarkMode;
-
-  factory SettingsData.fromJson(Map<String,dynamic> json) => _$SettingsDataFromJson(json);
-  Map<String,dynamic> toJson() => _$SettingsDataToJson(this);
-
-  //Default values
-  factory SettingsData.defaults(){
-    return SettingsData(
-      version: recentsDefaultVersion,
-      fontSize: recentsDefaultFontSize,
-      isDarkMode: recentsDefaultIsDarkMode,
-    );
-  }
 }
 
 class Recents{
-  // Themes
-  final ThemeData themeDark = GrayscaleTheme.dark;
-  final ThemeData themeLight = GrayscaleTheme.light;
-
-  ThemeMode themeModeCurrent = ThemeMode.dark;
-  ThemeMode get themeMode => themeModeCurrent;
-
-  // Settings
-  bool recentsIsDarkMode = true;
-  double recentsFontSize = 16;
-
-  Settings(){
-    load();
+  Future<String> getDatabasePath() async{
+    final directory = await getDatabasesPath();
+    return "$directory/$recentsDatabaseName";
   }
 
-  Future<String> getPath() async{
-    final directory = await getApplicationDocumentsDirectory();
-    return "${directory.path}/$recentsFileName";
-  }
-
-  Future<int> save(SettingsData data) async{
+  Future<Database?> getDatabase() async{
     try{
-      final path = await getPath();
-      final file = File(path);
+      Database databaseDb = await openDatabase(
+        await getDatabasePath(),
+        version: 1,
+        onCreate: (Database db, int version) async
+        {
+          for(var command in sqlCommands)
+          {
+            await db.execute(command);
+          }
+        },
+        onOpen: (Database db) async
+        {
+          for(var command in sqlCommands)
+          {
+            await db.execute(command);
+          }
+        },
+      );
+      return databaseDb;
+    }
+    catch(e){
+      log("Recents", "Error loading database: $e");
+      return null;
+    }
+  }
 
-      final jsonString = jsonEncode(data.toJson());
-      await file.writeAsString(jsonString);
+  Future<int> add(RecentsData data) async{
+    try{
+      final databaseDb = await getDatabase();
 
-      log("Settings", "Saved recents");
+      if(databaseDb==null){
+        return 1;
+      }
+
+      await databaseDb.insert(
+        "recents",
+        {
+          'name': data.fileName,
+          'type': data.fileType,
+          'size': data.fileSize,
+          'path': data.filePath,
+          'modified': data.fileModified.toIso8601String(),
+          'accessed': data.fileAccessed.toIso8601String()
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      log("Recents", "Added");
 
       return 0;
     }
     catch(e){
-      log("Settings", "Error saving recents");
-      log("Settings", "$e");
+      log("Recents", "Error adding: $e");
       return 1;
     }
   }
 
-  Future<int> create() async{
-    return save(SettingsData.defaults());
-  }
+  Future<List<RecentsData>> load() async{
+    //await deleteAll();
 
-  Future<({int result,SettingsData? data})> read() async{
     try{
-      final path = await getPath();
-      final file = File(path);
-      if(await file.exists()){
-        final dataString = await file.readAsString();
-        final dataJson = jsonDecode(dataString);
-        final data = SettingsData.fromJson(dataJson);
+      final databaseDb = await getDatabase();
+      if(databaseDb==null){
+        return [];
+      }
 
-        return (
-          result: 0,
-          data: data
+      final List<Map<String, dynamic>> dataMap = await databaseDb.query(
+        'recents',
+        columns: ['name', 'type', 'size', 'path', 'modified', 'accessed']
+      );
+
+      List<RecentsData> recentsList = [];
+      for(var data in dataMap)
+      {
+        recentsList.add(
+          RecentsData(
+            fileName: data["name"] as String,
+            fileType: data["type"] as String,
+            fileSize: data["size"] as int,
+            filePath: data["path"] as String,
+            fileModified: DateTime.parse(data["modified"]),
+            fileAccessed: DateTime.parse(data["accessed"]),
+          )
         );
       }
-      else{
-        // Create new recents as it dont exist
-        log("Settings", "Creating recents");
-        final result = await create();
-        if(result==0){
-          log("Settings", "Created recents");
-        }
-        else{
-          log("Settings", "Error creating recents");
-        }
-        return (
-          result: result,
-          data: SettingsData.defaults()
-        );
-      }
+
+      log("Recents", "Loaded ${recentsList.length} recents");
+      return recentsList;
     }
     catch(e){
-      log("Settings", "Error creating recents");
-      log("Settings", "$e");
-
-      return (
-        result: 0,
-        data: null
-      );
+      log("Recents", "Error loading: $e");
+      return [];
     }
   }
 
-  Future<void> load() async{
-    var result = await read();
-    if(result.result==0){
-      recentsIsDarkMode = result.data!.isDarkMode;
-      themeModeCurrent = recentsIsDarkMode ? ThemeMode.dark : ThemeMode.light;
-      recentsFontSize = result.data!.fontSize;
-      log("Recents", "Loaded recents");
-    }
-    else{
-      recentsIsDarkMode = recentsDefaultIsDarkMode;
-      themeModeCurrent = recentsIsDarkMode ? ThemeMode.dark : ThemeMode.light;
-      recentsFontSize = recentsDefaultFontSize;
-      log("Recents", "Error loading recents");
-    }
-    notifyListeners();
-  }
-
-  void modify(SettingsData data){
-    save(data);
-    load();
-  }
-
-  void delete() async{
+  Future<int> deleteAll() async{
     try{
-      final path = await getPath();
-      final file = File(path);
-      file.delete();
-      log("Settings", "Deleted recents");
+      await deleteDatabase(await getDatabasesPath());
+
+      return 0;
     }
-    catch(e)
-    {
-      log("Settings", "Error deleting recents");
-      log("Settings", "$e");
+    catch(e){
+      log("Recents", "Error deleting: $e");
+      return 1;
     }
   }
 
-  // Changing data
-  Future<void> toggleDarkMode() async{
-    final result = await read();
-    if(result.result==0){
-      result.data!.isDarkMode = !result.data!.isDarkMode;
-      await save(result.data!);
-      await load();
-    }
-  }
+  Future<int> deleteOne(String path) async
+  {
+    try{
+      final databaseDb = await getDatabase();
 
-  Future<void> incrementFontSize() async{
-    final result = await read();
-    if(result.result==0){
-      result.data!.fontSize = result.data!.fontSize+recentsFontStep;
-      await save(result.data!);
-      await load();
-    }
-  }
+      if(databaseDb==null){
+        return 1;
+      }
 
-  Future<void> decrementFontSize() async{
-    final result = await read();
-    if(result.result==0){
-      result.data!.fontSize = result.data!.fontSize-recentsFontStep;
-      await save(result.data!);
-      await load();
+      await databaseDb.delete(
+        "recents",
+        where: 'path = ?',
+        whereArgs: [path],
+      );
+
+      return 0;
+    }
+    catch(e){
+      log("Recents", "Error deleting: $e");
+      return 1;
     }
   }
 }
