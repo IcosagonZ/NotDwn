@@ -406,26 +406,9 @@ class _EditorPageState extends State<EditorPage> {
   {
     // Appearance themes
     final colorScheme = Theme.of(context).colorScheme;
-    //final textTheme = Theme.of(context).textTheme;
 
     Color colorPrimary = colorScheme.primary;
-    //Color colorSecondary = colorScheme.secondary;
-    //Color colorOnPrimary = colorScheme.onPrimary;
-    //Color colorOnSecondary = colorScheme.onSecondary;
-    //Color colorSurface = colorScheme.surfaceContainerHighest;
     Color colorSurfaceBright = colorScheme.surfaceBright;
-
-    //final styleDisplayLarge = textTheme.displayLarge;
-    //final styleDisplayMedium = textTheme.displayMedium;
-    //final styleDisplaySmall = textTheme.displaySmall;
-
-    //final styleHeadlineLarge = textTheme.headlineLarge;
-    //final styleHeadlineMedium = textTheme.headlineMedium;
-    //final styleHeadlineSmall = textTheme.headlineSmall;
-
-    //final styleTitleLarge = textTheme.titleLarge;
-    //final styleTitleMedium = textTheme.titleMedium;
-    //inal styleTitleSmall = textTheme.titleSmall;
 
     return Scaffold(
       body: Column(

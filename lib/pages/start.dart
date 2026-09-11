@@ -5,6 +5,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 
+import 'package:intl/intl.dart';
+
 // Pages
 import 'editor.dart';
 import 'draw.dart';
@@ -139,6 +141,25 @@ class _StartPageState extends State<StartPage> {
 
     Color colorSurfaceContainerLowest = colorScheme.surfaceContainerLowest;
     Color colorSurfaceContainerLow = colorScheme.surfaceContainerLow;
+
+    //Color colorSecondary = colorScheme.secondary;
+    //Color colorOnPrimary = colorScheme.onPrimary;
+    //Color colorOnSecondary = colorScheme.onSecondary;
+    //Color colorSurface = colorScheme.surfaceContainerHighest;
+
+    final textTheme = Theme.of(context).textTheme;
+
+    //final styleDisplayLarge = textTheme.displayLarge;
+    //final styleDisplayMedium = textTheme.displayMedium;
+    //final styleDisplaySmall = textTheme.displaySmall;
+
+    //final styleHeadlineLarge = textTheme.headlineLarge;
+    //final styleHeadlineMedium = textTheme.headlineMedium;
+    //final styleHeadlineSmall = textTheme.headlineSmall;
+
+    final styleTitleLarge = textTheme.titleLarge;
+    final styleTitleMedium = textTheme.titleMedium;
+    final styleTitleSmall = textTheme.titleSmall;
 
     return Scaffold(
       body: Container(
@@ -302,22 +323,11 @@ class _StartPageState extends State<StartPage> {
                                     if(filePicked!=null){
                                       final fileType = filePicked.path!.split(".").last;
 
-                                      if(fileType=="txt"){
+                                      if (fileType=="png"){
                                         Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (BuildContext context) => EditorPage(),
-                                            settings: RouteSettings(
-                                              arguments: {"path": filePicked.path}
-                                            ),
-                                          )
-                                        );
-                                      }
-                                      else if (fileType=="png"){
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (BuildContext context) => EditorPage(),
+                                            builder: (BuildContext context) => DrawPage(),
                                             settings: RouteSettings(
                                               arguments: {"path": filePicked.path}
                                             ),
@@ -325,12 +335,25 @@ class _StartPageState extends State<StartPage> {
                                         );
                                       }
                                       else{
+                                      //else if(fileType=="txt"){
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (BuildContext context) => EditorPage(),
+                                            settings: RouteSettings(
+                                              arguments: {"path": filePicked.path}
+                                            ),
+                                          )
+                                        );
+                                      }
+                                      /*
+                                      else{
                                         dialogSnackbar.showSnackBar(
                                           context,
                                           "Invalid file type",
                                           1
                                         );
-                                      }
+                                      }*/
                                     }
                                   }
                                 },
@@ -395,7 +418,13 @@ class _StartPageState extends State<StartPage> {
                     Expanded(
                       child: Padding(
                         padding: .all(16),
-                        child: ListView.builder(
+                        child: recentsListVisible.length==0
+                        ? Card(
+                          child: Center(
+                            child: Text("No recents yet")
+                          ),
+                        )
+                        : ListView.builder(
                           itemCount: recentsListVisible.length,
                           itemBuilder: (BuildContext context, int index){
                             final fileData = recentsListVisible[index];
@@ -422,21 +451,29 @@ class _StartPageState extends State<StartPage> {
                                 child: ListTile(
                                   leading: Icon(fileIcon),
                                   title: Text(fileData.fileName, overflow: .ellipsis,),
-                                  subtitle: Text(fileData.filePath, overflow: .ellipsis,),
+                                  subtitle: Column(
+                                    mainAxisAlignment: .start,
+                                    crossAxisAlignment: .start,
+                                    children: [
+                                      Text(fileData.filePath, overflow: .ellipsis,),
+                                      Text(
+                                        "Modified: ${DateFormat("d/M/yy h:mm a").format(fileData.fileModified)}",
+                                        overflow: .ellipsis,
+                                        style: textTheme.bodyMedium
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: IconButton(
+                                    icon: Icon(Icons.close),
+                                    tooltip: "Delete from history",
+                                    onPressed: (){
+                                      recentsHandler.deleteOne(fileData.filePath);
+                                      loadRecents();
+                                    },
+                                  ),
                                 ),
                                 onTap: () async{
-                                  if(fileType=="txt"){
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (BuildContext context) => EditorPage(),
-                                        settings: RouteSettings(
-                                          arguments: {"path": fileData.filePath}
-                                        ),
-                                      )
-                                    );
-                                  }
-                                  else if(fileType=="png"){
+                                  if(fileType=="png"){
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -448,12 +485,25 @@ class _StartPageState extends State<StartPage> {
                                     );
                                   }
                                   else{
+                                  //if(fileType=="txt" || fileType=="md"){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => EditorPage(),
+                                        settings: RouteSettings(
+                                          arguments: {"path": fileData.filePath}
+                                        ),
+                                      )
+                                    );
+                                  }
+                                  /*
+                                  else{
                                     dialogSnackbar.showSnackBar(
                                       context,
                                       "Invalid file type",
                                       1
                                     );
-                                  }
+                                  }*/
                                 },
                               ),
                             );
