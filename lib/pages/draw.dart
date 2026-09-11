@@ -380,6 +380,7 @@ class _DrawPageState extends State<DrawPage> {
           Divider(height: 0),
           Expanded(
             child: Stack(
+              clipBehavior: .hardEdge,
               children: [
                 // Layer 0
                 Listener(

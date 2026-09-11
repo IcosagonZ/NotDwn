@@ -212,13 +212,14 @@ class _StartPageState extends State<StartPage> {
                         });
                       },
                     ),
+                    /*
                     Divider(),
                     IconButton(
                       icon: Icon(LucideIcons.settings),
                       tooltip: "Settings",
                       onPressed: (){
                       },
-                    ),
+                    ),*/
                     Expanded(
                       child: DragToMoveArea(
                         child: Align(
