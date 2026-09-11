@@ -19,6 +19,8 @@ void main()
   windowManager.ensureInitialized();
 
   const windowOptions = WindowOptions(
+    size: Size(800, 600),
+    center: true,
     titleBarStyle: .hidden
   );
 

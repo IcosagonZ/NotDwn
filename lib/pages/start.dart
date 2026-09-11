@@ -112,11 +112,7 @@ class _StartPageState extends State<StartPage> {
             ]
           )
         ),
-        child: GestureDetector(
-          onPanStart: (_) async{
-            await windowManager.startDragging();
-          },
-          child: Row(
+        child: Row(
             children: [
               Padding(
                 padding: .all(2),
@@ -160,110 +156,132 @@ class _StartPageState extends State<StartPage> {
 
                       },
                     ),
-                    Spacer(
-
-                    ),
-                    Padding(
-                      padding: .only(bottom: 16),
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: Text(
-                          "NotDwn",
-                        ),
-                      ),
+                    Expanded(
+                      child: DragToMoveArea(
+                        child: Align(
+                          alignment: .bottomCenter,
+                          child: Padding(
+                            padding: .only(bottom: 16),
+                            child: RotatedBox(
+                              quarterTurns: 3,
+                              child: Text(
+                                "NotDwn",
+                              ),
+                            ),
+                          )
+                        )
+                      )
                     )
                   ],
                 ),
               ),
               Expanded(
-                child: Padding(
-                  padding:EdgeInsetsGeometry.all(16),
-                  child: GridView(
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 200,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 1
+                child: Column(
+                  children: [
+                    DragToMoveArea(
+                      child: Row(
+                        mainAxisAlignment: .end,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: (){
+
+                            },
+                          )
+                        ],
+                      )
                     ),
-                    children: [
-                      Card.filled(
-                        clipBehavior: .hardEdge,
-                        child: InkWell(
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: .min,
-                              children: [
-                                Icon(LucideIcons.file_plus_corner, size: 50),
-                                SizedBox(height: 16),
-                                Text("New")
-                              ],
-                            ),
+                    Expanded(
+                      child: Padding(
+                        padding:EdgeInsetsGeometry.all(16),
+                        child: GridView(
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 200,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1
                           ),
-                          onTap: () async{
-                            if(selectedFileType=="Text"){
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (BuildContext context) => EditorPage()
-                                )
-                              );
-                            }
-                            else if(selectedFileType=="Drawing"){
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (BuildContext context) => DrawPage()
-                                )
-                              );
-                            }
-                            else{
-                              final result = await dialogFileType(context, "Open");
-                              if(result=="Drawing"){
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (BuildContext context) => DrawPage()
-                                  )
-                                );
-                              }
-                              else if(result=="Text"){
-                                Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (BuildContext context) => EditorPage()
-                                )
-                              );
-                              }
-                            }
-                          },
-                        ),
-                      ),
-                      /*
-                      Card.filled(
-                        clipBehavior: .hardEdge,
-                        child: InkWell(
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: .min,
-                              children: [
-                                Icon(LucideIcons.file_input, size: 50),
-                                SizedBox(height: 16),
-                                Text("Open")
-                              ],
+                          children: [
+                            Card.filled(
+                              clipBehavior: .hardEdge,
+                              child: InkWell(
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      Icon(LucideIcons.file_plus_corner, size: 50),
+                                      SizedBox(height: 16),
+                                      Text("New")
+                                    ],
+                                  ),
+                                ),
+                                onTap: () async{
+                                  if(selectedFileType=="Text"){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => EditorPage()
+                                      )
+                                    );
+                                  }
+                                  else if(selectedFileType=="Drawing"){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => DrawPage()
+                                      )
+                                    );
+                                  }
+                                  else{
+                                    final result = await dialogFileType(context, "Open");
+                                    if(result=="Drawing"){
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (BuildContext context) => DrawPage()
+                                        )
+                                      );
+                                    }
+                                    else if(result=="Text"){
+                                      Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (BuildContext context) => EditorPage()
+                                      )
+                                    );
+                                    }
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                          onTap: () async{
-                          },
-                        ),
+                            /*
+                            Card.filled(
+                              clipBehavior: .hardEdge,
+                              child: InkWell(
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      Icon(LucideIcons.file_input, size: 50),
+                                      SizedBox(height: 16),
+                                      Text("Open")
+                                    ],
+                                  ),
+                                ),
+                                onTap: () async{
+                                },
+                              ),
+                            ),
+                            */
+                          ],
+                        )
                       ),
-                      */
-                    ],
-                  )
-                ),
+                    )
+                  ],
+                )
               )
             ],
           ),
-        ),
       )
     );
   }
