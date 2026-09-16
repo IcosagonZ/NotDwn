@@ -111,9 +111,13 @@ class Recents{
         return [];
       }
 
-      final List<Map<String, dynamic>> dataMap = await databaseDb.query(
+      /*final List<Map<String, dynamic>> dataMap = await databaseDb.query(
         'recents',
         columns: ['name', 'type', 'size', 'path', 'modified', 'accessed']
+      );*/
+
+      final List<Map<String, dynamic>> dataMap = await databaseDb.rawQuery(
+        'select * from recents order by accessed desc limit 10'
       );
 
       List<RecentsData> recentsList = [];
